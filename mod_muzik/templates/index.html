@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <title>Müzik Öneri Motoru</title>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;700&display=swap" rel="stylesheet">
+    <style>
+        body { background-color: #121212; color: white; font-family: 'Montserrat', sans-serif; text-align: center; margin: 0; padding: 0; }
+        
+        /* Navbar */
+        .navbar { padding: 20px; display: flex; justify-content: flex-end; padding-right: 50px; }
+        .nav-link { color: #1DB954; text-decoration: none; font-weight: bold; font-size: 1.2rem; border: 2px solid #1DB954; padding: 10px 20px; border-radius: 30px; transition: 0.3s; }
+        .nav-link:hover { background-color: #1DB954; color: black; }
+
+        /* BAŞLIK (Sadeleştirildi) */
+        h1 { margin-top: 20px; font-size: 3rem; color: #1DB954; font-weight: 700; letter-spacing: -1px; }
+        p.aciklama { color: #b3b3b3; font-size: 1.2rem; margin-bottom: 50px; font-weight: 300; }
+
+        /* BUTONLAR (Düz Renkler) */
+        .btn-container { display: flex; justify-content: center; flex-wrap: wrap; gap: 20px; margin-bottom: 40px; }
+        .btn { padding: 15px 50px; font-size: 16px; border: none; border-radius: 50px; cursor: pointer; color: white; font-weight: bold; transition: all 0.2s ease; text-transform: uppercase; letter-spacing: 1px; }
+        
+        /* Tek Renk (Solid) Tasarım */
+        .mutlu { background-color: #f1c40f; color: #121212; }   /* Sarı */
+        .uzgun { background-color: #3498db; }                   /* Mavi */
+        .enerjik { background-color: #e74c3c; }                 /* Kırmızı */
+        .sakin { background-color: #1DB954; color: #121212; }   /* Yeşil (Spotify) */
+
+        .btn:hover { transform: scale(1.05); filter: brightness(1.1); }
+
+        /* Kart Alanı */
+        .container { display: flex; flex-wrap: wrap; justify-content: center; gap: 30px; padding: 20px; max-width: 1200px; margin: 0 auto; }
+        
+        .kart { 
+            background-color: #181818; width: 240px; border-radius: 8px; overflow: hidden; position: relative; 
+            box-shadow: 0 4px 10px rgba(0,0,0,0.5); display: flex; flex-direction: column; transition: background 0.3s;
+        }
+        .kart:hover { background-color: #282828; }
+        
+        .kart img { width: 100%; height: 240px; object-fit: cover; }
+        
+        .bilgi { padding: 15px; flex-grow: 1; display: flex; flex-direction: column; justify-content: space-between; }
+        .sarki-adi { font-weight: bold; margin-bottom: 5px; color: white; display: block; font-size: 1rem; }
+        .sanatci { color: #b3b3b3; font-size: 0.9rem; margin-bottom: 15px; display: block; }
+        
+        audio { width: 100%; height: 25px; margin-bottom: 15px; filter: invert(1); opacity: 0.7; }
+        
+        .dinle-btn { background-color: #1DB954; color: white; text-decoration: none; padding: 10px; border-radius: 20px; font-weight: bold; font-size: 0.8rem; display: block; margin-top: auto; transition: 0.2s; }
+        .dinle-btn:hover { background-color: #1ed760; transform: scale(1.02); color: black; }
+
+        /* Kalp Butonu */
+        .kalp-btn { position: absolute; top: 10px; right: 10px; background: rgba(0,0,0,0.6); border: none; font-size: 20px; cursor: pointer; border-radius: 50%; width: 35px; height: 35px; display: flex; align-items: center; justify-content: center; transition: 0.3s; color: white; }
+        .kalp-btn:hover { background: rgba(29, 185, 84, 0.8); transform: scale(1.1); }
+    </style>
+</head>
+<body>
+
+    <div class="navbar">
+        <a href="/favorilerim" class="nav-link">❤️ Favorilerim</a>
+    </div>
+
+    <h1>Müzik Öneri Motoru</h1>
+    <p class="aciklama">Moduna Göre En İyi Şarkıları Bulmaya Hazır Mısın?</p>
+
+    <form method="POST">
+        <div class="btn-container">
+            <button type="submit" name="mod" value="happy" class="btn mutlu">Mutlu</button>
+            <button type="submit" name="mod" value="sad" class="btn uzgun">Hüzünlü</button>
+            <button type="submit" name="mod" value="energetic" class="btn enerjik">Enerjik</button>
+            <button type="submit" name="mod" value="chill" class="btn sakin">Sakin</button>
+        </div>
+    </form>
+
+    {% if mod %}
+        <div class="container">
+            {% for sarki in sarkilar %}
+            <div class="kart">
+                
+                <button onclick="favorile(this, '{{ sarki.isim }}', '{{ sarki.sanatci }}', '{{ sarki.resim }}', '{{ sarki.onizleme }}')" class="kalp-btn">🤍</button>
+
+                <img src="{{ sarki.resim }}" alt="Kapak">
+                <div class="bilgi">
+                    <div>
+                        <span class="sarki-adi">{{ sarki.isim }}</span>
+                        <span class="sanatci">{{ sarki.sanatci }}</span>
+                    </div>
+                    {% if sarki.onizleme %}
+                        <audio controls controlsList="nodownload"><source src="{{ sarki.onizleme }}" type="audio/mpeg"></audio>
+                    {% endif %}
+                    <a href="https://open.spotify.com/search/{{ sarki.isim }} {{ sarki.sanatci }}" target="_blank" class="dinle-btn">Spotify'da Çal ▶</a>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+
+    <script>
+        function favorile(btn, isim, sanatci, resim, onizleme) {
+            fetch('/begen', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    isim: isim,
+                    sanatci: sanatci,
+                    resim: resim,
+                    onizleme: onizleme
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if(data.success) {
+                    btn.innerHTML = "❤️";
+                    btn.style.transform = "scale(1.2)";
+                    btn.style.color = "#1DB954"; /* Kalp rengini de yeşil yaptım, istersen kırmızı kalabilir */
+                }
+            });
+        }
+    </script>
+
+</body>
+</html>
